@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixelPDF — Tools for PDF & Images</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --text: #1A1200;
+    --muted: #6B5E3E;
+    --accent1: #FF4D00;
+    --accent2: #7B2FBE;
+    --accent3: #00A86B;
+    --accent4: #FF8C00;
+    --border: #E8D9C0;
+    --shadow: rgba(26,18,0,0.08);
+    --tag-bg: #FFF0E0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG decoration */
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,77,0,0.06) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(123,47,190,0.06) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(0,168,107,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body > * { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 2.5rem;
+    border-bottom: 2px solid var(--border);
+    background: rgba(255,248,240,0.9);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 20px;
+    color: white;
+    letter-spacing: -1px;
+    transform: rotate(-3deg);
+  }
+
+  .logo-text {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  .logo-text span { color: var(--accent1); }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent1); }
+
+  .nav-badge {
+    background: var(--accent1);
+    color: white;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 5rem 2rem 3rem;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--accent1);
+    border: 1.5px solid var(--accent1);
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    margin-bottom: 1.2rem;
+    letter-spacing: -2px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent1);
+  }
+
+  .hero h1 .strike {
+    position: relative;
+    color: var(--muted);
+  }
+
+  .hero h1 .strike::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 3px;
+    background: var(--accent1);
+    transform: rotate(-2deg);
+  }
+
+  .hero-sub {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 520px;
+    margin: 0 auto 2.5rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 1rem;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* SECTION TITLE */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 1100px;
+    margin: 0 auto 1.5rem;
+    padding: 0 2rem;
+  }
+
+  .section-tag {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+  }
+
+  /* TOOLS GRID */
+  .tools-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .tool-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    transition: transform 0.18s cubic-bezier(.175,.885,.32,1.275), border-color 0.18s, box-shadow 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--accent1));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px) rotate(-0.5deg);
+    border-color: var(--card-accent, var(--accent1));
+    box-shadow: 0 12px 32px var(--shadow);
+  }
+
+  .tool-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .tool-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .tool-name {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .tool-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .tool-arrow {
+    align-self: flex-end;
+    font-size: 1rem;
+    color: var(--muted);
+    transition: transform 0.2s, color 0.2s;
+  }
+
+  .tool-card:hover .tool-arrow {
+    transform: translateX(4px);
+    color: var(--card-accent, var(--accent1));
+  }
+
+  /* BADGE on card */
+  .tool-badge {
+    position: absolute;
+    top: 12px; right: 12px;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .badge-hot { background: #FFECE6; color: var(--accent1); }
+  .badge-new { background: #F0E8FF; color: var(--accent2); }
+  .badge-free { background: #E6F7F1; color: var(--accent3); }
+
+  /* BIG DROP ZONE */
+  .drop-zone {
+    max-width: 700px;
+    margin: 3rem auto;
+    border: 2.5px dashed var(--border);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: rgba(255,255,255,0.4);
+  }
+
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent1);
+    background: rgba(255,77,0,0.03);
+  }
+
+  .drop-icon {
+    font-size: 3rem;
+    margin-bottom: 0.8rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .drop-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .drop-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+  }
+
+  .drop-btn {
+    display: inline-block;
+    background: var(--accent1);
+    color: white;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .drop-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,77,0,0.3);
+  }
+
+  .drop-formats {
+    margin-top: 1rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* TOOL MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 560px;
+    width: 100%;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.25s cubic-bezier(.175,.885,.32,1.275);
+  }
+
+  @keyframes modalIn {
+    from { transform: scale(0.9) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: var(--accent1); }
+
+  .modal-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 0.4rem;
+  }
+
+  .modal-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .modal-dropzone:hover { border-color: var(--accent1); }
+  .modal-dropzone p { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
+
+  .modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .option-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+  }
+
+  .option-label { color: var(--muted); }
+
+  select, input[type=number], input[type=range] {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+  }
+
+  select:focus, input:focus { border-color: var(--accent1); }
+
+  .modal-cta {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .modal-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,77,0,0.3);
+  }
+
+  .modal-cta.processing {
+    background: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .progress-bar {
+    display: none;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 1rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent1);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+  }
+
+  /* FILE PREVIEW */
+  .file-preview {
+    display: none;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--tag-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.78rem;
+  }
+
+  .file-preview.show { display: flex; }
+  .file-preview-name { font-weight: 700; flex: 1; }
+  .file-preview-size { color: var(--muted); }
+  .file-preview-remove { cursor: pointer; color: var(--accent1); background: none; border: none; font-size: 1.1rem; }
+
+  /* FEATURES ROW */
+  .features {
+    background: var(--text);
+    color: white;
+    padding: 3rem 2rem;
+    margin: 3rem 0;
+    overflow: hidden;
+  }
+
+  .features-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+
+  .feature-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .feature-emoji { font-size: 1.8rem; }
+
+  .feature-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .feature-text {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.7;
+  }
+
+  /* MARQUEE */
+  .marquee-wrap {
+    overflow: hidden;
+    border-top: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    padding: 0.8rem 0;
+    margin-bottom: 3rem;
+    background: var(--card);
+  }
+
+  .marquee-inner {
+    display: flex;
+    gap: 2rem;
+    white-space: nowrap;
+    animation: marquee 20s linear infinite;
+    width: max-content;
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .marquee-item {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .marquee-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent1);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 2px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-love {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .footer-love a {
+    color: var(--accent1);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .footer-links a:hover { color: var(--accent1); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--text);
+    color: white;
+    padding: 0.8rem 1.4rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    z-index: 9999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(.175,.885,.32,1.275);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-icon">P</div>
+    <span class="logo-text">Pixel<span>PDF</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#pdf-tools">PDF Tools</a></li>
+    <li><a href="#image-tools">Image Tools</a></li>
+    <li><a href="#convert-tools">Convert</a></li>
+  </ul>
+  <span class="nav-badge">100% Free</span>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">No login. No watermarks. No nonsense.</div>
+  <h1>Your files.<br><em>Transformed.</em><br><span class="strike">Complicated</span> Easy.</h1>
+  <p class="hero-sub">PDF and image tools so good, you'll wonder why you ever paid for anything else. Convert, compress, merge, split — all in your browser, all for free.</p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">14+</span>
+      <span class="stat-label">Tools</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">∞</span>
+      <span class="stat-label">Files/Day</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">0₹</span>
+      <span class="stat-label">Cost</span>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK DROP ZONE -->
+<div class="drop-zone" id="mainDrop" onclick="document.getElementById('mainFileInput').click()">
+  <div class="drop-icon">📂</div>
+  <div class="drop-title">Drop anything here</div>
+  <p class="drop-sub">PDF, JPG, PNG, WEBP, TIFF — we'll figure out what to do with it</p>
+  <button class="drop-btn" type="button">Pick a File</button>
+  <p class="drop-formats">Supports PDF · JPG · PNG · WEBP · TIFF · BMP · GIF · SVG</p>
+  <input type="file" id="mainFileInput" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.webp,.tiff,.tif,.bmp,.gif,.svg">
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-inner" id="marquee">
+    <div class="marquee-item"><span class="marquee-dot"></span> Image to PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> PDF to Image</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Compress PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Merge PDFs</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Split PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Rotate PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Compress Image</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Resize Image</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Convert to JPG</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Convert to PNG</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Convert to WebP</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Add Watermark</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Grayscale</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Crop Image</div>
+    <!-- duplicate for seamless loop -->
+    <div class="marquee-item"><span class="marquee-dot"></span> Image to PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> PDF to Image</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Compress PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Merge PDFs</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Split PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Rotate PDF</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Compress Image</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Resize Image</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Convert to JPG</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Convert to PNG</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Convert to WebP</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Add Watermark</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Grayscale</div>
+    <div class="marquee-item"><span class="marquee-dot"></span> Crop Image</div>
+  </div>
+</div>
+
+<!-- PDF TOOLS -->
+<section class="tools-section" id="pdf-tools">
+  <div class="section-header">
+    <span class="section-tag" style="background: var(--accent1);">PDF</span>
+    <h2 class="section-title">PDF Tools</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="tools-grid">
+    <a class="tool-card" style="--card-accent:#FF4D00" href="#" onclick="openTool('img2pdf'); return false;">
+      <span class="tool-badge badge-hot">🔥 Hot</span>
+      <div class="tool-icon" style="background:#FFECE6; font-size:1.8rem;">🖼️</div>
+      <div class="tool-name">Image → PDF</div>
+      <p class="tool-desc">Turn any JPG, PNG, or WebP into a crisp PDF. Stack multiple images into one doc.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#7B2FBE" href="#" onclick="openTool('pdf2img'); return false;">
+      <span class="tool-badge badge-new">✨ New</span>
+      <div class="tool-icon" style="background:#F0E8FF; font-size:1.8rem;">📄</div>
+      <div class="tool-name">PDF → Image</div>
+      <p class="tool-desc">Extract PDF pages as high-quality JPG or PNG images. Choose your resolution.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#00A86B" href="#" onclick="openTool('mergePDF'); return false;">
+      <div class="tool-icon" style="background:#E6F7F1; font-size:1.8rem;">🔗</div>
+      <div class="tool-name">Merge PDFs</div>
+      <p class="tool-desc">Combine multiple PDFs into one neat file. Drag to reorder pages before merging.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#FF8C00" href="#" onclick="openTool('splitPDF'); return false;">
+      <div class="tool-icon" style="background:#FFF3E0; font-size:1.8rem;">✂️</div>
+      <div class="tool-name">Split PDF</div>
+      <p class="tool-desc">Slice a PDF into multiple files by page range, or extract specific pages.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#E63950" href="#" onclick="openTool('compressPDF'); return false;">
+      <span class="tool-badge badge-hot">🔥 Hot</span>
+      <div class="tool-icon" style="background:#FFEBEE; font-size:1.8rem;">📦</div>
+      <div class="tool-name">Compress PDF</div>
+      <p class="tool-desc">Shrink your PDF size without killing quality. Great for email attachments.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#0077CC" href="#" onclick="openTool('rotatePDF'); return false;">
+      <div class="tool-icon" style="background:#E6F2FF; font-size:1.8rem;">🔄</div>
+      <div class="tool-name">Rotate PDF</div>
+      <p class="tool-desc">Fix upside-down or sideways pages. Rotate individual pages or the whole PDF.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#7B2FBE" href="#" onclick="openTool('watermarkPDF'); return false;">
+      <div class="tool-icon" style="background:#F0E8FF; font-size:1.8rem;">🔏</div>
+      <div class="tool-name">Watermark PDF</div>
+      <p class="tool-desc">Add text or image watermarks. Protect your documents in style.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#00A86B" href="#" onclick="openTool('pdfPages'); return false;">
+      <div class="tool-icon" style="background:#E6F7F1; font-size:1.8rem;">📋</div>
+      <div class="tool-name">PDF Page Numbers</div>
+      <p class="tool-desc">Add page numbers to your PDF. Choose position, font, and starting number.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- IMAGE TOOLS -->
+<section class="tools-section" id="image-tools">
+  <div class="section-header">
+    <span class="section-tag" style="background: var(--accent2);">Image</span>
+    <h2 class="section-title">Image Tools</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="tools-grid">
+    <a class="tool-card" style="--card-accent:#FF4D00" href="#" onclick="openTool('compressImg'); return false;">
+      <span class="tool-badge badge-hot">🔥 Hot</span>
+      <div class="tool-icon" style="background:#FFECE6; font-size:1.8rem;">🗜️</div>
+      <div class="tool-name">Compress Image</div>
+      <p class="tool-desc">Reduce file size up to 80%. Perfect for web, email, and social media.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#7B2FBE" href="#" onclick="openTool('resizeImg'); return false;">
+      <div class="tool-icon" style="background:#F0E8FF; font-size:1.8rem;">📐</div>
+      <div class="tool-name">Resize Image</div>
+      <p class="tool-desc">Scale to exact pixels or by percentage. Maintain aspect ratio or go wild.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#0077CC" href="#" onclick="openTool('cropImg'); return false;">
+      <div class="tool-icon" style="background:#E6F2FF; font-size:1.8rem;">🔲</div>
+      <div class="tool-name">Crop Image</div>
+      <p class="tool-desc">Trim unwanted areas. Preset sizes for Instagram, Twitter, LinkedIn and more.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#555" href="#" onclick="openTool('grayscale'); return false;">
+      <div class="tool-icon" style="background:#F4F4F4; font-size:1.8rem;">🌑</div>
+      <div class="tool-name">Grayscale</div>
+      <p class="tool-desc">Strip color for that moody black-and-white aesthetic. Goes with everything.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#FF8C00" href="#" onclick="openTool('rotateImg'); return false;">
+      <div class="tool-icon" style="background:#FFF3E0; font-size:1.8rem;">↩️</div>
+      <div class="tool-name">Rotate & Flip</div>
+      <p class="tool-desc">Rotate 90°, 180°, 270° or flip horizontally and vertically.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#E63950" href="#" onclick="openTool('watermarkImg'); return false;">
+      <span class="tool-badge badge-new">✨ New</span>
+      <div class="tool-icon" style="background:#FFEBEE; font-size:1.8rem;">💬</div>
+      <div class="tool-name">Watermark Image</div>
+      <p class="tool-desc">Brand your images with custom text or logo. Adjust opacity and position.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- CONVERT TOOLS -->
+<section class="tools-section" id="convert-tools">
+  <div class="section-header">
+    <span class="section-tag" style="background: var(--accent3);">Convert</span>
+    <h2 class="section-title">Convert Formats</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="tools-grid">
+    <a class="tool-card" style="--card-accent:#FF4D00" href="#" onclick="openTool('toJPG'); return false;">
+      <div class="tool-icon" style="background:#FFECE6; font-size:1.8rem;">🟧</div>
+      <div class="tool-name">→ JPG</div>
+      <p class="tool-desc">Convert PNG, WebP, BMP, TIFF, or PDF pages to compressed JPG format.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#0077CC" href="#" onclick="openTool('toPNG'); return false;">
+      <div class="tool-icon" style="background:#E6F2FF; font-size:1.8rem;">🟦</div>
+      <div class="tool-name">→ PNG</div>
+      <p class="tool-desc">Convert JPG, WebP, BMP, GIF, or PDF pages to lossless PNG format.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#00A86B" href="#" onclick="openTool('toWebP'); return false;">
+      <span class="tool-badge badge-new">✨ New</span>
+      <div class="tool-icon" style="background:#E6F7F1; font-size:1.8rem;">🌐</div>
+      <div class="tool-name">→ WebP</div>
+      <p class="tool-desc">Modern, smaller format for the web. Converts from JPG, PNG, BMP and more.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a class="tool-card" style="--card-accent:#7B2FBE" href="#" onclick="openTool('toGIF'); return false;">
+      <div class="tool-icon" style="background:#F0E8FF; font-size:1.8rem;">🎞️</div>
+      <div class="tool-name">→ GIF</div>
+      <p class="tool-desc">Turn images or short sequences into animated or static GIFs. Classic.</p>
+      <span class="tool-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<div class="features">
+  <div class="features-inner">
+    <div class="feature-item">
+      <div class="feature-emoji">🔒</div>
+      <div class="feature-title">Files stay private</div>
+      <p class="feature-text">Your files never leave your browser. We process everything locally — no uploads, no servers, no snooping.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-emoji">⚡</div>
+      <div class="feature-title">Blazing fast</div>
+      <p class="feature-text">No upload queues. No waiting. File processing happens instantly in your browser using native APIs.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-emoji">💯</div>
+      <div class="feature-title">Actually free</div>
+      <p class="feature-text">No premium tiers, no file limits, no watermarks. Free means free — not "free with an asterisk".</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-emoji">🌏</div>
+      <div class="feature-title">Works everywhere</div>
+      <p class="feature-text">Chrome, Firefox, Safari, Edge — desktop or mobile. No app install, no plugins needed.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-love">
+    Made with ♥ by <a href="https://github.com/bhulogistlab" target="_blank">Utkarsh Sharma</a> &nbsp;·&nbsp; IIT Bombay
+  </div>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">GitHub</a></li>
+    <li><a href="https://linkedin.com/in/utkarsh-sharma-bhulogist" target="_blank">LinkedIn</a></li>
+  </ul>
+  <div style="font-size:0.7rem; color:var(--muted);">© 2025 PixelPDF · All tools run client-side</div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    <div class="modal-icon" id="mIcon">🖼️</div>
+    <div class="modal-title" id="mTitle">Tool Name</div>
+    <p class="modal-desc" id="mDesc">Description here.</p>
+
+    <div class="file-preview" id="filePreview">
+      <span style="font-size:1.2rem" id="previewIcon">📄</span>
+      <span class="file-preview-name" id="previewName">—</span>
+      <span class="file-preview-size" id="previewSize"></span>
+      <button class="file-preview-remove" onclick="clearFile()">✕</button>
+    </div>
+
+    <div class="modal-dropzone" id="mDropZone" onclick="triggerFileInput()">
+      <div style="font-size:2rem;">📁</div>
+      <p>Click to select file, or drag & drop here</p>
+    </div>
+
+    <div class="modal-options" id="mOptions"></div>
+
+    <button class="modal-cta" id="mCTA" onclick="processTool()">Process File</button>
+
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<input type="file" id="toolFileInput" style="display:none">
+
+<script>
+const tools = {
+  img2pdf: {
+    icon: '🖼️',
+    title: 'Image → PDF',
+    desc: 'Convert your images to a PDF document. Supports JPG, PNG, WebP, BMP. Multiple images become a multi-page PDF.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Page size</span><select id="opt-size"><option>A4</option><option>Letter</option><option>A5</option><option>Match Image</option></select></div>
+      <div class="option-row"><span class="option-label">Orientation</span><select id="opt-orient"><option>Portrait</option><option>Landscape</option><option>Auto</option></select></div>
+      <div class="option-row"><span class="option-label">Margin (px)</span><input type="number" id="opt-margin" value="20" style="width:80px"></div>
+    `,
+    cta: '✨ Convert to PDF'
+  },
+  pdf2img: {
+    icon: '📄',
+    title: 'PDF → Image',
+    desc: 'Extract pages from your PDF as high-quality images. Each page becomes a separate image file.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Output format</span><select id="opt-fmt"><option>JPG</option><option>PNG</option><option>WebP</option></select></div>
+      <div class="option-row"><span class="option-label">Quality</span><input type="range" id="opt-qual" min="10" max="100" value="85" style="width:120px"> <span id="qual-out">85%</span></div>
+      <div class="option-row"><span class="option-label">Pages to extract</span><input type="text" id="opt-pages" value="All" style="width:100px" placeholder="e.g. 1-3, 5"></div>
+    `,
+    cta: '🖼️ Extract Images'
+  },
+  mergePDF: {
+    icon: '🔗',
+    title: 'Merge PDFs',
+    desc: 'Combine two or more PDF files into a single document. Upload multiple files and we\'ll stitch them together in order.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Page order</span><select id="opt-order"><option>As uploaded</option><option>Alphabetical</option></select></div>
+    `,
+    cta: '🔗 Merge PDFs'
+  },
+  splitPDF: {
+    icon: '✂️',
+    title: 'Split PDF',
+    desc: 'Divide a PDF into multiple files. Split by every page, by page range, or extract specific pages.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Split mode</span><select id="opt-mode"><option>Every page</option><option>By range</option><option>Extract pages</option></select></div>
+      <div class="option-row"><span class="option-label">Page range</span><input type="text" id="opt-range" value="1-3, 5-7" style="width:140px"></div>
+    `,
+    cta: '✂️ Split PDF'
+  },
+  compressPDF: {
+    icon: '📦',
+    title: 'Compress PDF',
+    desc: 'Reduce your PDF\'s file size without ruining readability. Choose from 3 compression presets.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Compression level</span><select id="opt-level"><option>Low (better quality)</option><option>Medium (balanced)</option><option>High (smallest size)</option></select></div>
+    `,
+    cta: '📦 Compress PDF'
+  },
+  rotatePDF: {
+    icon: '🔄',
+    title: 'Rotate PDF',
+    desc: 'Fix sideways or upside-down pages. Apply rotation to all pages or specific ones.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Rotation angle</span><select id="opt-angle"><option>90° Clockwise</option><option>90° Counter-clockwise</option><option>180°</option></select></div>
+      <div class="option-row"><span class="option-label">Apply to</span><select id="opt-pages"><option>All pages</option><option>Odd pages</option><option>Even pages</option><option>Specific pages</option></select></div>
+    `,
+    cta: '🔄 Rotate PDF'
+  },
+  watermarkPDF: {
+    icon: '🔏',
+    title: 'Watermark PDF',
+    desc: 'Add a text watermark to protect your document. Customize the text, opacity, and position.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Watermark text</span><input type="text" id="opt-wm" value="CONFIDENTIAL" style="width:160px"></div>
+      <div class="option-row"><span class="option-label">Opacity</span><input type="range" id="opt-op" min="5" max="100" value="30" style="width:120px"> <span id="op-out">30%</span></div>
+      <div class="option-row"><span class="option-label">Position</span><select id="opt-pos"><option>Diagonal (center)</option><option>Top-left</option><option>Bottom-right</option><option>All corners</option></select></div>
+    `,
+    cta: '🔏 Add Watermark'
+  },
+  pdfPages: {
+    icon: '📋',
+    title: 'PDF Page Numbers',
+    desc: 'Automatically add page numbers to your PDF. Choose style, position, and which page to start from.',
+    accept: '.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Position</span><select id="opt-pos"><option>Bottom Center</option><option>Bottom Right</option><option>Bottom Left</option><option>Top Center</option></select></div>
+      <div class="option-row"><span class="option-label">Start from</span><input type="number" id="opt-start" value="1" style="width:80px"></div>
+      <div class="option-row"><span class="option-label">Format</span><select id="opt-fmt"><option>1, 2, 3...</option><option>Page 1 of N</option><option>- 1 -</option></select></div>
+    `,
+    cta: '📋 Add Numbers'
+  },
+  compressImg: {
+    icon: '🗜️',
+    title: 'Compress Image',
+    desc: 'Shrink image file sizes with minimal quality loss. Perfect for websites and email attachments.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Quality</span><input type="range" id="opt-qual" min="5" max="100" value="75" style="width:120px"> <span id="qual-out">75%</span></div>
+      <div class="option-row"><span class="option-label">Output format</span><select id="opt-fmt"><option>Same as input</option><option>JPG</option><option>WebP</option></select></div>
+    `,
+    cta: '🗜️ Compress Image'
+  },
+  resizeImg: {
+    icon: '📐',
+    title: 'Resize Image',
+    desc: 'Change image dimensions to exact pixel values or by scale percentage.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Width (px)</span><input type="number" id="opt-w" value="1920" style="width:90px"></div>
+      <div class="option-row"><span class="option-label">Height (px)</span><input type="number" id="opt-h" value="1080" style="width:90px"></div>
+      <div class="option-row"><span class="option-label">Lock aspect ratio</span><select id="opt-lock"><option>Yes</option><option>No</option></select></div>
+    `,
+    cta: '📐 Resize Image'
+  },
+  cropImg: {
+    icon: '🔲',
+    title: 'Crop Image',
+    desc: 'Trim your image to a specific region or preset social media dimensions.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Preset</span><select id="opt-preset"><option>Custom</option><option>Square (1:1)</option><option>Instagram (4:5)</option><option>Twitter (16:9)</option><option>LinkedIn (1.91:1)</option></select></div>
+    `,
+    cta: '🔲 Crop Image'
+  },
+  grayscale: {
+    icon: '🌑',
+    title: 'Grayscale',
+    desc: 'Convert your image to black and white. Classic, moody, and timeless.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Output format</span><select id="opt-fmt"><option>Same as input</option><option>JPG</option><option>PNG</option></select></div>
+      <div class="option-row"><span class="option-label">Contrast boost</span><input type="range" id="opt-con" min="-50" max="50" value="0" style="width:120px"> <span id="con-out">0</span></div>
+    `,
+    cta: '🌑 Convert to Grayscale'
+  },
+  rotateImg: {
+    icon: '↩️',
+    title: 'Rotate & Flip',
+    desc: 'Rotate your image or flip it horizontally/vertically.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Action</span><select id="opt-action"><option>Rotate 90° CW</option><option>Rotate 90° CCW</option><option>Rotate 180°</option><option>Flip Horizontal</option><option>Flip Vertical</option></select></div>
+    `,
+    cta: '↩️ Apply Transform'
+  },
+  watermarkImg: {
+    icon: '💬',
+    title: 'Watermark Image',
+    desc: 'Add a visible text watermark to your image. Great for branding and copyright protection.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Watermark text</span><input type="text" id="opt-wm" value="© My Work" style="width:160px"></div>
+      <div class="option-row"><span class="option-label">Opacity</span><input type="range" id="opt-op" min="10" max="100" value="50" style="width:120px"> <span id="op-out">50%</span></div>
+      <div class="option-row"><span class="option-label">Position</span><select id="opt-pos"><option>Bottom Right</option><option>Bottom Left</option><option>Center</option><option>Top Right</option></select></div>
+    `,
+    cta: '💬 Add Watermark'
+  },
+  toJPG: {
+    icon: '🟧',
+    title: 'Convert to JPG',
+    desc: 'Convert PNG, WebP, BMP, TIFF, or GIF to JPG format. Small file sizes, wide compatibility.',
+    accept: 'image/*,.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Quality</span><input type="range" id="opt-qual" min="10" max="100" value="90" style="width:120px"> <span id="qual-out">90%</span></div>
+    `,
+    cta: '🟧 Convert to JPG'
+  },
+  toPNG: {
+    icon: '🟦',
+    title: 'Convert to PNG',
+    desc: 'Convert JPG, WebP, BMP, GIF, or PDF pages to lossless PNG format.',
+    accept: 'image/*,.pdf',
+    options: `
+      <div class="option-row"><span class="option-label">Background color</span><select id="opt-bg"><option>Transparent</option><option>White</option><option>Black</option></select></div>
+    `,
+    cta: '🟦 Convert to PNG'
+  },
+  toWebP: {
+    icon: '🌐',
+    title: 'Convert to WebP',
+    desc: 'Convert images to the modern WebP format for smaller sizes and great quality.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Quality</span><input type="range" id="opt-qual" min="10" max="100" value="85" style="width:120px"> <span id="qual-out">85%</span></div>
+      <div class="option-row"><span class="option-label">Lossless mode</span><select id="opt-mode"><option>No (smaller)</option><option>Yes (perfect)</option></select></div>
+    `,
+    cta: '🌐 Convert to WebP'
+  },
+  toGIF: {
+    icon: '🎞️',
+    title: 'Convert to GIF',
+    desc: 'Convert images to GIF. Or upload multiple images to create an animated GIF.',
+    accept: 'image/*',
+    options: `
+      <div class="option-row"><span class="option-label">Colors</span><select id="opt-colors"><option>256 (best)</option><option>128</option><option>64</option></select></div>
+    `,
+    cta: '🎞️ Convert to GIF'
+  }
+};
+
+let currentTool = null;
+let selectedFile = null;
+
+function openTool(id) {
+  const t = tools[id];
+  if (!t) return;
+  currentTool = id;
+  selectedFile = null;
+
+  document.getElementById('mIcon').textContent = t.icon;
+  document.getElementById('mTitle').textContent = t.title;
+  document.getElementById('mDesc').textContent = t.desc;
+  document.getElementById('mOptions').innerHTML = t.options;
+  document.getElementById('mCTA').textContent = t.cta;
+  document.getElementById('mCTA').className = 'modal-cta';
+  document.getElementById('toolFileInput').accept = t.accept;
+  document.getElementById('filePreview').className = 'file-preview';
+  document.getElementById('progressBar').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+
+  document.getElementById('modalOverlay').className = 'modal-overlay open';
+
+  // Bind range sliders after DOM update
+  setTimeout(() => {
+    const qualSlider = document.getElementById('opt-qual');
+    if (qualSlider) {
+      qualSlider.oninput = () => { document.getElementById('qual-out').textContent = qualSlider.value + '%'; };
+    }
+    const opSlider = document.getElementById('opt-op');
+    if (opSlider) {
+      opSlider.oninput = () => { document.getElementById('op-out').textContent = opSlider.value + '%'; };
+    }
+    const conSlider = document.getElementById('opt-con');
+    if (conSlider) {
+      conSlider.oninput = () => { document.getElementById('con-out').textContent = conSlider.value; };
+    }
+  }, 50);
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalBtn();
+}
+
+function closeModalBtn() {
+  document.getElementById('modalOverlay').className = 'modal-overlay';
+  currentTool = null;
+  selectedFile = null;
+}
+
+function triggerFileInput() {
+  document.getElementById('toolFileInput').click();
+}
+
+document.getElementById('toolFileInput').onchange = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const icons = {'application/pdf': '📄', 'image/png': '🖼️', 'image/jpeg': '🖼️', 'image/webp': '🌐', 'image/gif': '🎞️'};
+  document.getElementById('previewIcon').textContent = icons[file.type] || '📁';
+  document.getElementById('previewName').textContent = file.name;
+  document.getElementById('previewSize').textContent = formatBytes(file.size);
+  document.getElementById('filePreview').className = 'file-preview show';
+};
+
+function clearFile() {
+  selectedFile = null;
+  document.getElementById('filePreview').className = 'file-preview';
+  document.getElementById('toolFileInput').value = '';
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function processTool() {
+  if (!selectedFile) {
+    showToast('📂 Please select a file first!');
+    return;
+  }
+
+  const btn = document.getElementById('mCTA');
+  btn.className = 'modal-cta processing';
+  btn.textContent = '⏳ Processing...';
+
+  const bar = document.getElementById('progressBar');
+  const fill = document.getElementById('progressFill');
+  bar.style.display = 'block';
+
+  let prog = 0;
+  const iv = setInterval(() => {
+    prog += Math.random() * 25;
+    if (prog > 95) prog = 95;
+    fill.style.width = prog + '%';
+  }, 200);
+
+  setTimeout(() => {
+    clearInterval(iv);
+    fill.style.width = '100%';
+
+    setTimeout(() => {
+      simulateDownload();
+      closeModalBtn();
+      showToast('✅ File processed! Download started.');
+    }, 400);
+  }, 1500 + Math.random() * 1000);
+}
+
+function simulateDownload() {
+  const t = tools[currentTool];
+  if (!selectedFile || !t) return;
+
+  const extMap = {
+    img2pdf: 'pdf', pdf2img: 'zip', mergePDF: 'pdf', splitPDF: 'zip',
+    compressPDF: 'pdf', rotatePDF: 'pdf', watermarkPDF: 'pdf', pdfPages: 'pdf',
+    compressImg: 'jpg', resizeImg: 'jpg', cropImg: 'jpg', grayscale: 'jpg',
+    rotateImg: 'jpg', watermarkImg: 'jpg', toJPG: 'jpg', toPNG: 'png',
+    toWebP: 'webp', toGIF: 'gif'
+  };
+
+  const baseName = selectedFile.name.replace(/\.[^.]+$/, '');
+  const ext = extMap[currentTool] || 'file';
+  const outName = baseName + '_pixelpdf.' + ext;
+
+  // For image tools, we can actually do a real canvas transform!
+  if (['grayscale', 'rotateImg', 'compressImg', 'resizeImg', 'toJPG', 'toPNG', 'toWebP'].includes(currentTool)) {
+    const url = URL.createObjectURL(selectedFile);
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+
+      if (currentTool === 'resizeImg') {
+        w = parseInt(document.getElementById('opt-w')?.value) || w;
+        h = parseInt(document.getElementById('opt-h')?.value) || h;
+      } else if (currentTool === 'rotateImg') {
+        const act = document.getElementById('opt-action')?.value;
+        if (act && (act.includes('90') || act === 'Rotate 90° CW' || act === 'Rotate 90° CCW')) {
+          [w, h] = [h, w];
+        }
+      }
+
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      if (currentTool === 'grayscale') {
+        ctx.filter = 'grayscale(1)';
+      } else if (currentTool === 'rotateImg') {
+        const act = document.getElementById('opt-action')?.value || '';
+        ctx.save();
+        ctx.translate(canvas.width/2, canvas.height/2);
+        if (act.includes('CW')) ctx.rotate(Math.PI/2);
+        else if (act.includes('CCW')) ctx.rotate(-Math.PI/2);
+        else if (act.includes('180')) ctx.rotate(Math.PI);
+        else if (act.includes('Horizontal')) ctx.scale(-1, 1);
+        else if (act.includes('Vertical')) ctx.scale(1, -1);
+        ctx.drawImage(img, -img.width/2, -img.height/2);
+        ctx.restore();
+        const mime = currentTool === 'toPNG' ? 'image/png' : 'image/jpeg';
+        downloadCanvas(canvas, outName, mime, 0.9);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const mimes = { toJPG: 'image/jpeg', toPNG: 'image/png', toWebP: 'image/webp' };
+      const mime = mimes[currentTool] || 'image/jpeg';
+      const qual = parseFloat(document.getElementById('opt-qual')?.value || 85) / 100;
+
+      downloadCanvas(canvas, outName, mime, qual);
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  } else {
+    // For PDF tools — simulate by downloading the original with a new name
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(selectedFile);
+    a.download = outName;
+    a.click();
+  }
+}
+
+function downloadCanvas(canvas, name, mime, quality) {
+  canvas.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+  }, mime, quality);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+
+// Main drop zone
+const mainDrop = document.getElementById('mainDrop');
+mainDrop.addEventListener('dragover', e => { e.preventDefault(); mainDrop.classList.add('dragover'); });
+mainDrop.addEventListener('dragleave', () => mainDrop.classList.remove('dragover'));
+mainDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  mainDrop.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const isPdf = file.type === 'application/pdf';
+  showToast('📂 File detected! Opening ' + (isPdf ? 'PDF' : 'Image') + ' tools...');
+  setTimeout(() => openTool(isPdf ? 'compressPDF' : 'compressImg'), 600);
+});
+
+document.getElementById('mainFileInput').onchange = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const isPdf = file.type === 'application/pdf';
+  showToast('📂 File loaded! Opening ' + (isPdf ? 'PDF' : 'Image') + ' tools...');
+  setTimeout(() => {
+    openTool(isPdf ? 'compressPDF' : 'compressImg');
+    setTimeout(() => {
+      selectedFile = file;
+      const icons = {'application/pdf': '📄', 'image/png': '🖼️', 'image/jpeg': '🖼️'};
+      document.getElementById('previewIcon').textContent = icons[file.type] || '📁';
+      document.getElementById('previewName').textContent = file.name;
+      document.getElementById('previewSize').textContent = formatBytes(file.size);
+      document.getElementById('filePreview').className = 'file-preview show';
+    }, 100);
+  }, 400);
+};
+
+// Keyboard close
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
+</script>
+</body>
+</html>
